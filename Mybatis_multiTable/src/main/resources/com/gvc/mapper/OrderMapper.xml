@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.gvc.mapper.OrderMapper">
+
+    <resultMap id="orderMap" type="com.gvc.domain.Orders">
+        <id property="id" column="id"/>
+        <result property="ordertime" column="ordertime"/>
+        <result property="total" column="total"/>
+        <result property="uid" column="uid"/>
+
+        <!-- <association>标签：在进行一对一关联查询配置时，使用该标签进行关联
+              property="user"：要封装实体的属性名
+              javaType="com.gvc.domain.User"：要封装实体的属性类型
+              -->
+        <association property="user" javaType="com.gvc.domain.User">
+            <id property="id" column="uid"/>
+            <result property="username" column="username" />
+            <result property="birthday" column="brithday" />
+            <result property="sex" column="sex" />
+            <result property="address" column="address" />
+        </association>
+    </resultMap>
+
+    <!-- 一对一关联查询： 查询所有订单，同时查询每个订单所属的用户信息 -->
+    <select id="findAllWithUser" resultMap="orderMap">
+        select * from orders o LEFT JOIN user u ON o.uid = u.id
+    </select>
+
+
+    <resultMap id="orderMap2" type="com.gvc.domain.Orders">
+        <id property="id" column="id"/>
+        <result property="ordertime" column="ordertime"/>
+        <result property="total" column="total"/>
+        <result property="uid" column="uid"/>
+
+        <!-- 问题：1.怎么去执行第二条sql；2. 执行第二条sql后，怎么传递 uid参数 -->
+        <association property="user" javaType="com.gvc.domain.User" select="com.gvc.mapper.UserMapper.findById" column="uid"
+                     fetchType="eager"/>
+
+    </resultMap>
+
+    <!-- 一对一嵌套查询： 查询所有订单，同时查询每个订单所属的用户信息 -->
+    <select id="findAllWithUser2" resultMap="orderMap2">
+        select * from orders
+    </select>
+
+    <!-- 根据uid查询对应订单 -->
+    <select id="findByUid" parameterType="int" resultType="com.gvc.domain.Orders">
+        select * from orders where uid = #{uid}
+    </select>
+
+</mapper>

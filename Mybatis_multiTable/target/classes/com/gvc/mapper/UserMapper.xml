@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.gvc.mapper.UserMapper">
+
+    <!-- 当前映射开启二级缓存 -->
+    <cache/>
+
+    <resultMap id="userMap" type="com.gvc.domain.User">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="birthday" column="birthday"/>
+        <result property="sex" column="sex"/>
+        <result property="address" column="address"/>
+
+        <!-- 一对多使用<collection>标签进行关联 -->
+        <collection property="ordersList" ofType="Orders">
+            <id property="id" column="oid"/>
+            <result property="ordertime" column="ordertime"/>
+            <result property="total" column="total"/>
+            <result property="uid" column="uid"/>
+        </collection>
+        
+    </resultMap>
+
+    <!-- 一对一关联查询： 查询所有订单，同时查出每个订单所属的用户信息-->
+    <select id="findAllWithOrders" resultMap="userMap">
+        SELECT *,o.id oid FROM USER u LEFT JOIN orders o ON u.id = o.uid
+    </select>
+
+    
+    <!-- 多对多查询：查询所有用户，同时查询出该用户的所有角色 -->
+    <resultMap id="userRoleMap" type="com.gvc.domain.User">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="birthday" column="birthday"/>
+        <result property="sex" column="sex"/>
+        <result property="address" column="address"/>
+
+        <collection property="roleList" ofType="com.gvc.domain.Role">
+            <id property="id" column="rid"/>
+            <result property="rolename" column="rolename"/>
+            <result property="roleDesc" column="roleDesc"/>
+        </collection>
+
+    </resultMap>
+    
+    <select id="findAllWithRoles" resultMap="userRoleMap">
+        SELECT u.*, r.id rid,r.rolename,r.roleDesc FROM `user` u
+            LEFT JOIN sys_user_role ur ON u.id = ur.userid -- 左外连接中间表
+            LEFT JOIN sys_role r ON ur.roleid = r.id
+    </select>
+
+    <!-- 根据id查询用户 -->
+    <!-- useCache="true"：当前statement使用二级缓存 -->
+    <select id="findById" resultType="com.gvc.domain.User" parameterType="int" useCache="true">
+        select * from user where id = #{id}
+    </select>
+
+    <resultMap id="userOrderMap" type="com.gvc.domain.User">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="birthday" column="birthday"/>
+        <result property="sex" column="sex"/>
+        <result property="address" column="address"/>
+
+        <!-- fetchType="lazy"：延迟加载
+             fetchType="eager"：立即加载
+         -->
+        <collection property="ordersList" ofType="com.gvc.domain.Orders" select="com.gvc.mapper.OrderMapper.findByUid" column="id"
+                    />
+
+    </resultMap>
+    
+    <!-- 一对多嵌套查询：查询所有用户，与此同时查询出该用户具有的订单 -->
+    <select id="findAllWithOrders2" resultMap="userOrderMap">
+        select * from user
+    </select>
+
+    <resultMap id="userRoleMap2" type="com.gvc.domain.User">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="birthday" column="birthday"/>
+        <result property="sex" column="sex"/>
+        <result property="address" column="address"/>
+
+        <collection property="roleList" ofType="com.gvc.domain.Role" select="com.gvc.mapper.RoleMapper.findByUid" column="id"/>
+
+    </resultMap>
+
+    <!-- 多对多嵌套查询：查询用户, 同时查询出该用户的所有角色 -->
+    <select id="findAllWithRoles2" resultMap="userRoleMap2">
+        select * from user
+    </select>
+</mapper>

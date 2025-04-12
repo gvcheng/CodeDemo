@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.gvc.mapper.UserMapper">
+    <!--根据id查询用户-->
+    <select id="findUserById" parameterType="int" resultMap="userResultMap">
+        select * from user where id = #{id}
+    </select>
+
+    <!-- id: 标签的唯一标识 ; type: 封装后的实体类型 -->
+    <resultMap id="userResultMap" type="com.gvc.domain.User">
+        <!-- 手动配置映射关系 -->
+        <!-- 子标签id: 用来配置主键 ；property对应属性，column对应字段-->
+        <id property="idabc" column="id"></id>
+        <!-- 子标签result: 表中普通字段的封装 -->
+        <result property="usernameabc" column="username"></result>
+        <result property="birthdayabc" column="birthday"></result>
+        <result property="sexabc" column="sex"></result>
+        <result property="addressabc" column="address"></result>
+    </resultMap>
+    
+    <!-- 查询所有用户 -->
+    <!-- resultMap: 手动配置实体属性与表中字段的映射关系，完成手动封装 -->
+    <select id="findAllResultMap" resultMap="userResultMap">
+        select * from user
+    </select>
+
+    <!-- 多条件查询：方式一 -->
+    <select id="findByIdAndUsername1" resultMap="userResultMap">
+        select * from user where id = #{param1} and username = #{param2}
+    </select>
+
+    <!-- 多条件查询：方式二  #{}内为注解里的值 -->
+    <select id="findByIdAndUsername2" resultMap="userResultMap">
+        select * from user where id = #{id} and username = #{username}
+    </select>
+
+    <!-- 多条件查询：方式三  #{}内为 User实体内get方法后的首字母小写属性名 -->
+    <select id="findByIdAndUsername3" resultMap="userResultMap" parameterType="com.gvc.domain.User">
+        select * from user where id = #{idabc} and username = #{usernameabc}
+    </select>
+
+    <!-- 模糊查询：方式一 -->
+    <select id="findByUsername1" resultMap="userResultMap" parameterType="string">
+        <!-- #{}在mybatis中是占位符，引用参数值的时候会自动添加单引号‘’ -->
+        select * from user where username like #{username}
+    </select>
+
+    <!-- 模糊查询：方式二 -->
+    <select id="findByUsername2" resultMap="userResultMap" parameterType="string">
+        <!-- parameterType是基本数据类型或 String时 ${}里面的值只能写value，${}是sql原样拼接，无单引号-->
+        <!--不推荐使用，因为会出现sql注入问题-->
+        select * from user where username like '${vlaue}'
+    </select>
+
+    <!-- 添加用户，获取返回主键：方式一 -->
+    <!-- useGeneratedKeys: 声明返回主键；
+         keyProperty: 返回主键的值封装到实体中的哪个属性上 -->
+    <insert id="saveUser1" parameterType="user" useGeneratedKeys="true" keyProperty="idabc">
+        insert into user(username,birthday,sex,address) values (#{usernameabc},#{birthdayabc},#{sexabc},#{addressabc})
+    </insert>
+
+    <!-- 添加用户，获取返回主键：方式二 -->
+    <insert id="saveUser2" parameterType="user">
+        <!-- selectKey标签：适用范围广，支持所有类型数据库
+             order="AFTER": 表示这句话在Insert执行后再执行此语句
+             keyColumn="id": 指定主键对应的列名
+             keyProperty="idabc"：返回主键的值封装到实体中的哪个属性上
+             resultType="int"：指定主键类型
+             -->
+        <selectKey order="AFTER" keyColumn="id" keyProperty="idabc" resultType="int">
+            select LAST_INSERT_ID()
+        </selectKey>
+        insert into user(username,birthday,sex,address) values (#{usernameabc},#{birthdayabc},#{sexabc},#{addressabc})
+    </insert>
+
+    <!-- 动态sql之<if>:多条件查询 -->
+    <select id="findByIdAndUsernameIf" parameterType="user" resultMap="userResultMap">
+        select * from user
+         <!-- <where>标签：相当于 where 1=1,但如果没有条件，不会拼接上where关键字-->
+         <where>
+             <!-- test里面写的就是表达式 -->
+            <if test="idabc != null">
+                AND id = #{idabc}
+            </if>
+            <if test="usernameabc != null">
+                AND username = #{usernameabc}
+            </if>
+         </where>
+    </select>
+
+    <!-- 动态sql之<set>: 动态更新 -->
+    <update id="updateIf" parameterType="user">
+        update user
+        <!-- <set>标签：在更新的时候，会自动添加set关键字，且去掉最后一个条件的逗号 -->
+        <set>
+            <if test="usernameabc != null">
+                username = #{usernameabc},
+            </if>
+            <if test="birthdayabc != null">
+                birthday = #{birthdayabc},
+            </if>
+            <if test="sexabc != null">
+                sex = #{sexabc},
+            </if>
+            <if test="addressabc != null">
+                address = #{addressabc},
+            </if>
+
+        </set>
+            where id = #{idabc}
+    </update>
+
+    <!--抽取的sql片段-->
+    <sql id="selectUser">
+        select * from user
+    </sql>
+    
+    <!-- 动态sql之<foreach>标签：根据多个id值查询用户 集合 -->
+    <select id="findByList" parameterType="list" resultMap="userResultMap">
+         <include refid="selectUser"/>
+        <where>
+            <!-- collection: 代表要遍历的集合元素，当传递数据类型为基本数据类型或String时，通常写collection或list
+                 open: 语句的开始部分
+                 close: 语句的结束部分
+                 item: 遍历集合中的每个元素，生成的变量名
+                 separator: 分隔符
+             -->
+            <foreach collection="collection" open="id in (" close=")" item="idabc" separator=",">
+                #{idabc}
+            </foreach>
+        </where>
+    </select>
+
+    <!-- 动态sql之<foreach>标签：根据多个id值查询用户 数组 -->
+    <select id="findByArray" parameterType="int" resultMap="userResultMap">
+        <include refid="selectUser"/>
+        <where>
+            <!-- collection: 代表要遍历的集合元素，当传递数据类型为基本数据类型或String时，通常写collection或list
+                 open: 语句的开始部分
+                 close: 语句的结束部分
+                 item: 遍历集合中的每个元素，生成的变量名
+                 separator: 分隔符
+             -->
+            <foreach collection="array" open="id in (" close=")" item="idabc" separator=",">
+                #{idabc}
+            </foreach>
+        </where>
+    </select>
+
+</mapper>
