@@ -1,0 +1,66 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/mvc
+       http://www.springframework.org/schema/mvc/spring-mvc.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!--  IOC注解扫描  -->
+    <context:component-scan base-package="com.gvc.controller"/>
+
+    <!--  处理器映射器 & 处理器适配器  功能增强：支持json的读写-->
+    <mvc:annotation-driven />
+
+    <!--  视图解析器 ： ViewResolver -->
+    <bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <!-- 前缀/后缀  success: 逻辑视图名，解析成物理视图名为 /WEB-INF/pages/success.jsp  -->
+        <property name="prefix" value="/WEB-INF/pages/"/>
+        <property name="suffix" value=".jsp"/>
+    </bean>
+
+    <!--  自定义类型转换器  -->
+    <bean id="conversionService" class="org.springframework.context.support.ConversionServiceFactoryBean">
+        <property name="converters">
+            <set>
+                <bean class="com.gvc.converter.DateConverter"/>
+            </set>
+        </property>
+    </bean>
+
+    <!--  方式一：指定放行静态资源 mapping:放行的映射路径 location:静态资源的目录 -->
+<!--    <mvc:resources mapping="/js/**" location="/js/"/>-->
+<!--    <mvc:resources mapping="/css/**" location="/css/"/>-->
+<!--    <mvc:resources mapping="/img/**" location="/img/"/>-->
+
+    <!--  方式二：放行全部静态资源 开启 DefaultServlet 处理静态资源 -->
+    <mvc:default-servlet-handler/>
+
+    <!--  spring-mvc.xml中配置文件上传解析器  -->
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <!--   文件上传的最大值   当前设置为 5MB-->
+        <property name="maxUploadSize" value="5242800"></property>
+        <!-- 设定文件上传时写入内存的最大值，如果小于这个参数不会生成临时文件，默认为10240 -->
+        <property name="maxInMemorySize" value="40960"></property>
+    </bean>
+
+    <!--  配置自定义异常处理器  -->
+    <bean id="globalExceptionHandler" class="com.gvc.excepetion.GlobalExceptionResolver"></bean>
+
+    <!--  配置拦截器  -->
+    <mvc:interceptors>
+        <mvc:interceptor>
+            <mvc:mapping path="/**"/> <!-- "/**" 对所有controller类里的方法都进行拦截 -->
+            <bean class="com.gvc.interceptor.MyInterceptor1"></bean>
+        </mvc:interceptor>
+        <mvc:interceptor>
+            <mvc:mapping path="/**"/>
+            <bean class="com.gvc.interceptor.MyInterceptor2"></bean>
+        </mvc:interceptor>
+    </mvc:interceptors>
+
+</beans>
