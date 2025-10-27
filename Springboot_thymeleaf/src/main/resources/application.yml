@@ -1,0 +1,7 @@
+spring:
+  thymeleaf:
+    cache: false   #开发阶段为了验证效果建议关闭缓存，生产环境理应开启
+    encoding: utf-8
+    mode: HTML
+    prefix: classpath:/templates/  #前缀，tmplates/文件夹下不对用户开放，只能请求转发跳转
+    suffix: .html                  #后缀

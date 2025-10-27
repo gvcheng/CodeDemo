@@ -1,0 +1,13 @@
+server:
+  port: 8080
+spring:
+  datasource:
+    name: druid
+    type: com.alibaba.druid.pool.DruidDataSource
+    url: jdbc:mysql://localhost:3306/springboot_db?serverTimezone=UTC&characterEncoding=UTF-8
+    username: root
+    password: 0709
+mybatis:
+  mapper-locations: classpath:mapper/*Mapper.xml
+  configuration:
+    map-underscore-to-camel-case: true
